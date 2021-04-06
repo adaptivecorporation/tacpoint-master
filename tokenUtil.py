@@ -46,7 +46,7 @@ def token_required(f):
             data = jwt.decode(token, constants.SECRET_KEY)
             con = open_connection()
             try:
-                queryGetUser = 'select * from user where email = "{0}";'.format(data['email'])
+                queryGetUser = 'select * from users where username = "{0}";'.format(data['username'])
                 cur = con.cursor()
                 cur.execute(queryGetUser)
                 result = cur.fetchall()
@@ -85,7 +85,7 @@ def checkPwdResetToken(token):
         print(data)
         con = open_connection()
         with con:
-            queryGetUser = 'select * from user where email = "%s";' % (data['email'])
+            queryGetUser = 'select * from users where username = "%s";' % (data['username'])
             cur = con.cursor()
             cur.execute(queryGetUser)
             result = cur.fetchall()

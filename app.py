@@ -236,7 +236,7 @@ def createUser():
 
 @app.route(BASE_URL + 'sysinfo/<ep_id>', methods=['GET'])
 @token_required
-def get_EP_SysInfo(ep_id):
+def get_EP_SysInfo(current_user, ep_id):
     con = open_connection()
     query = 'select * from endpoints where cluster_id="{0}" and endpoint_id="{1}"'.format(conf.cluster_id, ep_id)
     try:
@@ -254,7 +254,7 @@ def get_EP_SysInfo(ep_id):
 
 @app.route(BASE_URL + 'tasks/list', methods=['GET'])
 @token_required
-def listTasks():
+def listTasks(current_user):
     con = open_connection()
     query = 'select * from tasks'
     try:
@@ -269,7 +269,7 @@ def listTasks():
 
 @app.route(BASE_URL + 'tasks/create', methods=['PUT'])
 @token_required
-def createTask():
+def createTask(current_user):
     data = request.get_json()
     con = open_connection()
     task = data['task']
@@ -289,7 +289,7 @@ def createTask():
 
 @app.route(BASE_URL + 'getEndpoints', methods=['GET'])
 @token_required
-def getEndpoints():
+def getEndpoints(current_user):
     con = open_connection()
     query = 'select * from endpoints where cluster_id="{0}"'.format(conf.cluster_id)
     try:
