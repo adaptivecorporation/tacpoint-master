@@ -3,3 +3,7 @@ DB_USER = "tacpoint-sql"
 DB_PASSWORD = "adaptive123!"
 DB_NAME = "tacpoint"
 mongoclient = "mongodb://10.10.10.203:27017/"
+SECRET_KEY = '00#@gfa*7**&$&951Hteucd'
+expireTime = 1440
+pwdExpireTime = 15
+PWD_SECRET_KEY = 'Laf$$%vasf5d5@xvadii&&&'
