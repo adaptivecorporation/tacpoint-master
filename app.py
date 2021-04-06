@@ -57,7 +57,7 @@ def get_EP_SysInfo(ep_id):
     print(resp)
     return jsonify({'sysinfo': resp})
 
-@app.route(BASE_URL + 'api/tasks/list', methods=['GET'])
+@app.route(BASE_URL + 'tasks/list', methods=['GET'])
 def listTasks():
     con = open_connection()
     query = 'select * from tasks'
@@ -71,7 +71,7 @@ def listTasks():
         return jsonify({"message": "error"})
     return jsonify({'tasks': res})
 
-@app.route(BASE_URL + 'api/tasks/create', methods=['PUT'])
+@app.route(BASE_URL + 'tasks/create', methods=['PUT'])
 def createTask():
     data = request.get_json()
     con = open_connection()
@@ -90,7 +90,7 @@ def createTask():
         return jsonify({'message':'server error'}),500
     return jsonify({'message': 'task created', 'target': target}),200
 
-@app.route(BASE_URL + 'api/getEndpoints', methods=['GET'])
+@app.route(BASE_URL + 'getEndpoints', methods=['GET'])
 def getEndpoints():
     con = open_connection()
     query = 'select * from endpoints where cluster_id="{0}"'.format(conf.cluster_id)
