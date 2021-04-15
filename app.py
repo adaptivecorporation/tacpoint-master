@@ -274,7 +274,8 @@ def createTask(current_user):
     con = open_connection()
     task = data['task']
     target = data['target']
-    data = data['data']
+    if data['data']: data = data['data']
+    else: data = ''
     query = "insert into task_list (task_id, cluster_id, endpoint_id, task, data) values ('{0}','{1}','{2}','{3}','{4}')".format(uuid.uuid4(),conf.cluster_id, target, task, data)
     try:
         cur = con.cursor()
