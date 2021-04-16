@@ -251,6 +251,22 @@ def get_EP_SysInfo(current_user, ep_id):
     resp = tacpoint_col.find_one({"_id": ObjectId(res[0]['document_id'])}, {'_id': False})
     print(resp)
     return jsonify({'sysinfo': resp})
+@app.route(BASE_URL + "dashinfo", methods=['GET'])
+def dashInfo():
+    ep_query = 'select * from endpoints order by last_connection limit 1'
+    tasks_query = 'select * from task_list where is_completed=0'
+    try:
+        cur = con.cursor()
+        cur.execute(ep_query)
+        latest_ep = cur.fetchall()
+        cur.execute(tasks_query)
+        task_list = cur.fetchall()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'system error'})
+    return jsonify({'latest_ep': res[0], 'tasks': tasklist})
 
 @app.route(BASE_URL + "ep/latest-check-in", methods=['GET'])
 def latestCheckIn():
