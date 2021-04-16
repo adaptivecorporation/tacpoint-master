@@ -26,6 +26,7 @@ app = Flask(__name__)
 api = Api(app)
 Compress(app)
 cors = CORS(app)
+cache = Cache(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 BASE_URL = '/api/v0/'
@@ -251,6 +252,8 @@ def get_EP_SysInfo(current_user, ep_id):
     resp = tacpoint_col.find_one({"_id": ObjectId(res[0]['document_id'])}, {'_id': False})
     print(resp)
     return jsonify({'sysinfo': resp})
+
+@cache.cached(timeout=60)
 @app.route(BASE_URL + "dashinfo", methods=['GET'])
 def dashInfo():
     con = open_connection()
