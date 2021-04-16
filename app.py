@@ -266,7 +266,7 @@ def dashInfo():
     except Exception as error:
         print(error)
         return jsonify({'message': 'system error'})
-    return jsonify({'latest_ep': latest_ep[0], 'tasks': tasklist})
+    return jsonify({'latest_ep': latest_ep[0], 'tasks': task_list})
 
 @app.route(BASE_URL + "ep/latest-check-in", methods=['GET'])
 def latestCheckIn():
