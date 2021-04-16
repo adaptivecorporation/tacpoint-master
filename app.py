@@ -252,6 +252,21 @@ def get_EP_SysInfo(current_user, ep_id):
     print(resp)
     return jsonify({'sysinfo': resp})
 
+@app.route(BASE_URL + "ep/latest-check-in", methods=['GET'])
+def latestCheckIn():
+    con = open_connection()
+    query = 'select * from endpoints order by last_connection limit 1'
+    try:
+        cur = con.cursor()
+        cur.execute(query)
+        res = cur.fetchall()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'system error'})
+    return jsonify({'latest_ep': res[0]})
+
 @app.route(BASE_URL + 'tasks/list', methods=['GET'])
 @token_required
 def listTasks(current_user):
