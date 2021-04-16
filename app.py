@@ -253,6 +253,7 @@ def get_EP_SysInfo(current_user, ep_id):
     return jsonify({'sysinfo': resp})
 @app.route(BASE_URL + "dashinfo", methods=['GET'])
 def dashInfo():
+    con = open_connection()
     ep_query = 'select * from endpoints order by last_connection limit 1'
     tasks_query = 'select * from task_list where is_completed=0'
     try:
