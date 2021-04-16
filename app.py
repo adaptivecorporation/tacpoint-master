@@ -258,7 +258,7 @@ def get_EP_SysInfo(current_user, ep_id):
 def dashInfo():
     con = open_connection()
     ep_query = 'select * from endpoints order by last_connection limit 1'
-    tasks_query = 'select a.*, b.name as task_name from task_list a where is_completed=0 inner join tasks on a.task = b.task_id'
+    tasks_query = 'select a.*, b.name as task_name from task_list a inner join tasks on a.task = b.task_id where is_completed=0'
     try:
         cur = con.cursor()
         cur.execute(ep_query)
