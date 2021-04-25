@@ -329,7 +329,7 @@ def createTask(current_user):
 @token_required
 def rerun_Task(current_user, task_id):
     con = open_connection()
-    q1 = 'update task_list set is_complete=1 where task_id="{0}"'.format(task_id)
+    q1 = 'update task_list set is_completed=1 where task_id="{0}"'.format(task_id)
     q2 = 'insert into task_list (task_id, cluster_id, endpoint_id, task, data) select task_id, cluster_id, endpoint_id, task, data from task_list where task_id="{0}"'.format(task_id)
     try:
         cur = con.cursor()
@@ -342,7 +342,23 @@ def rerun_Task(current_user, task_id):
     except Exception as error:
         print(error)
         return jsonify({'message': 'server error'}),500
-    return jsonify({'message': 'success'}),200
+    return jsonify({'message': 'success'}),
+    
+@app.route(BASE_URL + "tasks/delete/<task_id>")
+@token_required
+def delete_Task(current_user, task_id):
+    con = open_connection()
+    q = 'delete from task_list where task_id="{0}"'.format(task_id)
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        con.commit()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'server error'}),500
+    return jsonify({'message': 'success!'}),200
 
 @app.route(BASE_URL + 'getEndpoints', methods=['GET'])
 @token_required
@@ -392,4 +408,4 @@ def db_getClusterInfo(cluster_id):
 
 
 if __name__ == '__main__':
-	app.run(debug=True, host='0.0.0.0', port=5000)
+	app.run(debug=True, host='0.0.0.0', port=4444)
