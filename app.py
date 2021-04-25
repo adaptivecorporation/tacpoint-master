@@ -341,7 +341,7 @@ def rerun_Task(current_user, task_id):
         return jsonify({'message': 'server error'}),500
     return jsonify({'message': 'success'}),
     
-@app.route(BASE_URL + "tasks/delete/<task_id>")
+@app.route(BASE_URL + "tasks/delete/<task_id>", methods=['DELETE'])
 @token_required
 def delete_Task(current_user, task_id):
     con = open_connection()
