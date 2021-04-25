@@ -329,13 +329,10 @@ def createTask(current_user):
 @token_required
 def rerun_Task(current_user, task_id):
     con = open_connection()
-    q1 = 'update task_list set is_completed=1 where task_id="{0}"'.format(task_id)
-    q2 = 'insert into task_list (task_id, cluster_id, endpoint_id, task, data) select task_id, cluster_id, endpoint_id, task, data from task_list where task_id="{0}"'.format(task_id)
+    q1 = 'update task_list set ep_notified=0 where task_id="{0}"'.format(task_id)
     try:
         cur = con.cursor()
         cur.execute(q1)
-        con.commit()
-        cur.execute(q2)
         con.commit()
         cur.close()
 
