@@ -403,6 +403,21 @@ def db_getClusterInfo(cluster_id):
         return jsonify({'message': 'server error'}),500
     return jsonify({'cluster': res[0]})
 
+@app.route(BASE_URL + "cluster/uri/<cluster_id>", methods=['GET'])
+def cluster_get_uri(cluster_id):
+    con = open_connection()
+    query = 'select * from clusters where cluster_id="{0}"'.format(cluster_id)
+    try:
+        cur = con.cursor()
+        cur.execute(query)
+        res = cur.fetchall()
+
+    except Exception as error:
+        print(error)
+    host = res[0]['cluster_host'] + ':' + str(res[0]['cluster_port'])
+    uri = 'https://'+ host + '/v1/ep/join'
+    return jsonify({'uri': uri})
+
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0', port=4444)
