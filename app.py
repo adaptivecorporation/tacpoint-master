@@ -478,7 +478,6 @@ def get_dump_sysInfo():
 def get_dump_conns():
     con = open_connection()
     data = request.get_json()
-    print(data)
     x = tacpoint_id_col_conns.insert_one(data['conns'])
     print(x.inserted_id)
     q = 'update intrusion set sysinfo="{0}" where hostname="{1}"'.format(x.inserted_id, data['hostname'])
@@ -540,7 +539,6 @@ def get_ID_SysInfo(host_id):
         print(error)
         return jsonify({"message": "error"})
     resp = tacpoint_id_col_sysinfo.find_one({"_id": ObjectId(res[0]['sysinfo'])}, {'_id': False})
-    print(resp)
     return jsonify({'sysinfo': resp})
 
 @app.route(BASE_URL + 'id/host/netstat/<host_id>', methods=['GET'])
@@ -556,7 +554,6 @@ def get_ID_Netstat(host_id):
         print(error)
         return jsonify({"message": "error"})
     resp = tacpoint_id_col_netstat.find_one({"_id": ObjectId(res[0]['netstat'])}, {'_id': False})
-    print(resp)
     return jsonify({'netstat': resp})
 
 @app.route(BASE_URL + 'id/research/netstat/<host_id>', methods=['GET'])
@@ -634,7 +631,6 @@ def get_ID_Proc(host_id):
         print(error)
         return jsonify({"message": "error"})
     resp = tacpoint_id_col_procs.find_one({"_id": ObjectId(res[0]['procs'])}, {'_id': False})
-    print(resp)
     return jsonify({'procs': resp})
 
 if __name__ == '__main__':
