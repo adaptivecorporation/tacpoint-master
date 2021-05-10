@@ -16,11 +16,20 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from tokenUtil import generateToken, token_required, generatePwdToken, checkPwdResetToken
 from datetime import datetime
-
+import json
+import re
+import requests
 mongoclient = pymongo.MongoClient(constants.mongoclient)
 
 tacpoint_db = mongoclient["tacpoint"]
 tacpoint_col = tacpoint_db[conf.cluster_id]
+
+tacpoint_id_db = mongoclient["tacpoint-id"]
+tacpoint_id_col_sysinfo = tacpoint_id_db[conf.cluster_id + '_sysinfo']
+tacpoint_id_col_procs = tacpoint_id_db[conf.cluster_id + '_procs']
+tacpoint_id_col_conns = tacpoint_id_db[conf.cluster_id + '_conns']
+tacpoint_id_col_netstat = tacpoint_id_db[conf.cluster_id + '_netstat']
+tacpoint_id_col_iprep = tacpoint_id_db[conf.cluster_id + '_iprep']
 
 now = datetime.now().isoformat()
 
@@ -418,6 +427,215 @@ def cluster_get_uri(cluster_id):
     uri = 'https://'+ host + '/v1/ep/join'
     return jsonify({'uri': uri})
 
+@app.route(BASE_URL + "id/get/hosts", methods=['GET'])
+def get_intrusion_hosts():
+    con = open_connection()
+    q = 'select * from intrusion'
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        res = cur.fetchall()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'server error'})
+    return jsonify({'intrusion': res}),200
+
+@app.route(BASE_URL + "id/get/host/<host_id>", methods=['GET'])
+def get_intrusion_host_by_id(host_id):
+    con = open_connection()
+    q = 'select * from intrusion where `key`="{0}"'.format(host_id)
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        res = cur.fetchall()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'server error'})
+    return jsonify({'host': res[0]}),200
+
+@app.route(BASE_URL + "id/dump/sysinfo", methods=['PUT'])
+def get_dump_sysInfo():
+    con = open_connection()
+    data = request.get_json()
+    x = tacpoint_id_col_sysinfo.insert_one(data['sysinfo'])
+    print(x.inserted_id)
+    q = 'update intrusion set sysinfo="{0}" where hostname="{1}"'.format(x.inserted_id, data['hostname'])
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        con.commit()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'system error'}),500
+    return jsonify({'message': 'ok'}),200
+
+@app.route(BASE_URL + "id/dump/conns", methods=['PUT'])
+def get_dump_conns():
+    con = open_connection()
+    data = request.get_json()
+    print(data)
+    x = tacpoint_id_col_conns.insert_one(data['conns'])
+    print(x.inserted_id)
+    q = 'update intrusion set sysinfo="{0}" where hostname="{1}"'.format(x.inserted_id, data['hostname'])
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        con.commit()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'system error'}),500
+    return jsonify({'message': 'ok'}),200
+
+@app.route(BASE_URL + "id/dump/netstat/<hostname>", methods=['PUT'])
+def get_dump_netstat(hostname):
+    con = open_connection()
+    data = request.get_json()
+    with open('netstat.txt', 'w+', encoding='utf-8') as f:
+        f.write(data)
+    print('netstat dump received')
+    arr = {}
+    arr['netstat'] = []
+    arr['hostname'] = hostname
+    with open('netstat.txt', 'r') as rf:
+        rfstring = rf.readlines()[4:]
+
+    re_ip = re.compile(r'[0-9]+(?:\.[0-9]+){3}:[0-9]+')
+    for line in rfstring:
+        ip = re.findall(re_ip, line)
+        if ip:
+            arr['netstat'].append(ip)
+
+    for line in arr['netstat']:
+        if line is None or line == '': del arr['netstat'][line]
+
+    x = tacpoint_id_col_netstat.insert_one(arr)
+    print(x.inserted_id)
+    q = 'update intrusion set netstat="{0}" where hostname="{1}"'.format(x.inserted_id, hostname)
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        con.commit()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'system error'}),500
+    return jsonify({'message': 'ok'}),200
+
+@app.route(BASE_URL + 'id/host/sysinfo/<host_id>', methods=['GET'])
+def get_ID_SysInfo(host_id):
+    con = open_connection()
+    query = 'select * from intrusion where `key`="{0}"'.format(host_id)
+    try:
+        cur = con.cursor()
+        cur.execute(query)
+        res = cur.fetchall()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({"message": "error"})
+    resp = tacpoint_id_col_sysinfo.find_one({"_id": ObjectId(res[0]['sysinfo'])}, {'_id': False})
+    print(resp)
+    return jsonify({'sysinfo': resp})
+
+@app.route(BASE_URL + 'id/host/netstat/<host_id>', methods=['GET'])
+def get_ID_Netstat(host_id):
+    con = open_connection()
+    query = 'select * from intrusion where `key`="{0}"'.format(host_id)
+    try:
+        cur = con.cursor()
+        cur.execute(query)
+        res = cur.fetchall()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({"message": "error"})
+    resp = tacpoint_id_col_netstat.find_one({"_id": ObjectId(res[0]['netstat'])}, {'_id': False})
+    print(resp)
+    return jsonify({'netstat': resp})
+
+@app.route(BASE_URL + 'id/research/netstat/<host_id>', methods=['GET'])
+def research_Netstat_By_ID(host_id):
+    con = open_connection()
+    tacpoint_id_col_iprep.drop()
+    query = 'select * from intrusion where `key`="{0}"'.format(host_id)
+    try:
+        cur = con.cursor()
+        cur.execute(query)
+        res = cur.fetchall()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({"message": "error"})
+    resp = tacpoint_id_col_netstat.find_one({"_id": ObjectId(res[0]['netstat'])}, {'_id': False})
+    arr = []
+    re_ip = re.compile(r'[0-9]+(?:\.[0-9]+){3}')
+    for rec in resp['netstat']:
+        ip1 = str(rec[0:1]).replace("['", "").replace("']", "")
+        ip2 = str(rec[1:2]).replace("['", "").replace("']", "")
+        split_str1 = ip1.split(":", 1)
+        split_str2 = ip2.split(":", 1)
+        arr.append(split_str1[0])
+        arr.append(split_str2[0])
+    print(arr)
+
+    research_api = "https://endpoint.apivoid.com/iprep/v1/pay-as-you-go/?key="+constants.IP_REP_API_KEY+"&ip="
+    local_re = re.compile(r'/(^127\.)|(^192\.168\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^::1$)|(^[fF][cCdD])/')
+    for rec in arr:
+        sr = re.findall(local_re, str(rec))
+        if sr: pass
+        uri = research_api + rec
+        r = requests.get(uri).json()
+        if 'error' not in r: x = tacpoint_id_col_iprep.insert_one(r['data'])
+        if 'error' not in r: print(x.inserted_id)
+    return jsonify({'netstat': 'ok'})
+
+@app.route(BASE_URL + 'id/research/iprep/results', methods=['GET'])
+def research_Netstat_By_ID_GetResults():
+
+    resp = tacpoint_id_col_iprep.find({}, {'_id': False})
+    arr = []
+    for doc in resp:
+        arr.append(doc)
+    return jsonify({'ip_rep': arr})
+
+@app.route(BASE_URL + "id/dump/proc", methods=['PUT'])
+def get_dump_procs():
+    con = open_connection()
+    data = request.get_json()
+    x = tacpoint_id_col_procs.insert_one(data['processes'])
+    print(x.inserted_id)
+    q = 'update intrusion set procs="{0}" where hostname="{1}"'.format(x.inserted_id, data['hostname'])
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        con.commit()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'system error'}),500
+    return jsonify({'message': 'ok'}),200
+
+@app.route(BASE_URL + 'id/host/proc/<host_id>', methods=['GET'])
+def get_ID_Proc(host_id):
+    con = open_connection()
+    query = 'select * from intrusion where `key`="{0}"'.format(host_id)
+    try:
+        cur = con.cursor()
+        cur.execute(query)
+        res = cur.fetchall()
+        cur.close()
+    except Exception as error:
+        print(error)
+        return jsonify({"message": "error"})
+    resp = tacpoint_id_col_procs.find_one({"_id": ObjectId(res[0]['procs'])}, {'_id': False})
+    print(resp)
+    return jsonify({'procs': resp})
 
 if __name__ == '__main__':
-	app.run(debug=True, host='0.0.0.0', port=4444)
+    app.run(debug=True, host='0.0.0.0', port=4444)

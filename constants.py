@@ -7,3 +7,4 @@ SECRET_KEY = '00#@gfa*7**&$&951Hteucd'
 expireTime = 1440
 pwdExpireTime = 15
 PWD_SECRET_KEY = 'Laf$$%vasf5d5@xvadii&&&'
+IP_REP_API_KEY = "372436a6036e28831bcc3dd2460889d9b7613048"
