@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_caching import Cache
 from flask_restful import Resource, Api
 from flask_cors import CORS, cross_origin
@@ -264,9 +264,8 @@ def get_EP_SysInfo(current_user, ep_id):
     print(resp)
     return jsonify({'sysinfo': resp})
 
-@cache.cached(timeout=60)
 @app.route(BASE_URL + "dashinfo", methods=['GET'])
-def dashInfo():
+def dashInfo(current_user):
     con = open_connection()
     ep_query = 'select * from endpoints order by last_connection limit 1'
     tasks_query = 'SELECT a.*, b.name AS _task_name, c.endpoint_hostname FROM task_list a INNER JOIN endpoints c ON a.endpoint_id = c.endpoint_id INNER JOIN tasks b ON a.task = b.task_id WHERE is_completed=0'
@@ -284,7 +283,7 @@ def dashInfo():
     return jsonify({'latest_ep': latest_ep[0], 'tasks': task_list})
 
 @app.route(BASE_URL + "ep/latest-check-in", methods=['GET'])
-def latestCheckIn():
+def latestCheckIn(current_user):
     con = open_connection()
     query = 'select * from endpoints order by last_connection limit 1'
     try:
@@ -383,7 +382,8 @@ def getEndpoints(current_user):
     return jsonify({'endpoints': res})
 
 @app.route(BASE_URL + 'db/ep_id/<ep_id>', methods=['GET'])
-def db_GetEndpointInfo(ep_id):
+@token_required
+def db_GetEndpointInfo(current_user, ep_id):
     con = open_connection()
     query = 'select * from endpoints where endpoint_id="{0}"'.format(ep_id)
 
@@ -398,7 +398,8 @@ def db_GetEndpointInfo(ep_id):
     return jsonify({'ep': res[0]})
 
 @app.route(BASE_URL + 'db/cluster_id/<cluster_id>', methods=['GET'])
-def db_getClusterInfo(cluster_id):
+@token_required
+def db_getClusterInfo(current_user, cluster_id):
     con = open_connection()
     query = 'select * from clusters where cluster_id="{0}"'.format(cluster_id)
 
@@ -428,7 +429,8 @@ def cluster_get_uri(cluster_id):
     return jsonify({'uri': uri})
 
 @app.route(BASE_URL + "id/get/hosts", methods=['GET'])
-def get_intrusion_hosts():
+@token_required
+def get_intrusion_hosts(current_user):
     con = open_connection()
     q = 'select * from intrusion'
     try:
@@ -443,7 +445,8 @@ def get_intrusion_hosts():
     return jsonify({'intrusion': res}),200
 
 @app.route(BASE_URL + "id/get/host/<host_id>", methods=['GET'])
-def get_intrusion_host_by_id(host_id):
+@token_required
+def get_intrusion_host_by_id(current_user, host_id):
     con = open_connection()
     q = 'select * from intrusion where `key`="{0}"'.format(host_id)
     try:
@@ -458,7 +461,8 @@ def get_intrusion_host_by_id(host_id):
     return jsonify({'host': res[0]}),200
 
 @app.route(BASE_URL + "id/dump/sysinfo", methods=['PUT'])
-def get_dump_sysInfo():
+@token_required
+def get_dump_sysInfo(current_user):
     con = open_connection()
     data = request.get_json()
     x = tacpoint_id_col_sysinfo.insert_one(data['sysinfo'])
@@ -475,7 +479,8 @@ def get_dump_sysInfo():
     return jsonify({'message': 'ok'}),200
 
 @app.route(BASE_URL + "id/dump/conns", methods=['PUT'])
-def get_dump_conns():
+@token_required
+def get_dump_conns(current_user):
     con = open_connection()
     data = request.get_json()
     x = tacpoint_id_col_conns.insert_one(data['conns'])
@@ -492,7 +497,8 @@ def get_dump_conns():
     return jsonify({'message': 'ok'}),200
 
 @app.route(BASE_URL + "id/dump/netstat/<hostname>", methods=['PUT'])
-def get_dump_netstat(hostname):
+@token_required
+def get_dump_netstat(current_user, hostname):
     con = open_connection()
     data = request.get_json()
     with open('netstat.txt', 'w+', encoding='utf-8') as f:
@@ -527,7 +533,8 @@ def get_dump_netstat(hostname):
     return jsonify({'message': 'ok'}),200
 
 @app.route(BASE_URL + 'id/host/sysinfo/<host_id>', methods=['GET'])
-def get_ID_SysInfo(host_id):
+@token_required
+def get_ID_SysInfo(current_user, host_id):
     con = open_connection()
     query = 'select * from intrusion where `key`="{0}"'.format(host_id)
     try:
@@ -542,7 +549,8 @@ def get_ID_SysInfo(host_id):
     return jsonify({'sysinfo': resp})
 
 @app.route(BASE_URL + 'id/host/netstat/<host_id>', methods=['GET'])
-def get_ID_Netstat(host_id):
+@token_required
+def get_ID_Netstat(current_user, host_id):
     con = open_connection()
     query = 'select * from intrusion where `key`="{0}"'.format(host_id)
     try:
@@ -557,7 +565,8 @@ def get_ID_Netstat(host_id):
     return jsonify({'netstat': resp})
 
 @app.route(BASE_URL + 'id/research/netstat/<host_id>', methods=['GET'])
-def research_Netstat_By_ID(host_id):
+@token_required
+def research_Netstat_By_ID(current_user, host_id):
     con = open_connection()
     tacpoint_id_col_iprep.drop()
     query = 'select * from intrusion where `key`="{0}"'.format(host_id)
@@ -593,7 +602,8 @@ def research_Netstat_By_ID(host_id):
     return jsonify({'netstat': 'ok'})
 
 @app.route(BASE_URL + 'id/research/iprep/results', methods=['GET'])
-def research_Netstat_By_ID_GetResults():
+@token_required
+def research_Netstat_By_ID_GetResults(current_user):
 
     resp = tacpoint_id_col_iprep.find({}, {'_id': False})
     arr = []
@@ -602,7 +612,8 @@ def research_Netstat_By_ID_GetResults():
     return jsonify({'ip_rep': arr})
 
 @app.route(BASE_URL + "id/dump/proc", methods=['PUT'])
-def get_dump_procs():
+@token_required
+def get_dump_procs(current_user):
     con = open_connection()
     data = request.get_json()
     x = tacpoint_id_col_procs.insert_one(data['processes'])
@@ -619,7 +630,8 @@ def get_dump_procs():
     return jsonify({'message': 'ok'}),200
 
 @app.route(BASE_URL + 'id/host/proc/<host_id>', methods=['GET'])
-def get_ID_Proc(host_id):
+@token_required
+def get_ID_Proc(current_user, host_id):
     con = open_connection()
     query = 'select * from intrusion where `key`="{0}"'.format(host_id)
     try:
@@ -632,6 +644,47 @@ def get_ID_Proc(host_id):
         return jsonify({"message": "error"})
     resp = tacpoint_id_col_procs.find_one({"_id": ObjectId(res[0]['procs'])}, {'_id': False})
     return jsonify({'procs': resp})
+
+@app.route('/test.txt')
+def generate_text():
+    def generate():
+        f = open('test.txt', 'r')
+        for row in f:
+            yield row
+    return Response(generate(), mimetype='text/plain')  
+
+
+@app.route(BASE_URL + "agents/get", methods=['GET'])
+@token_required
+def get_tacpoint_agents(current_user):
+    con = open_connection()
+    q = 'select * from endpoints where is_tacpoint_agent=1'
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        res = cur.fetchall()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'server error'})
+    return jsonify({'agents': res}),200
+
+@app.route(BASE_URL + "k8s/get-masters", methods=['GET'])
+@token_required
+def get_tacpoint_k8s_masters(current_user):
+    con = open_connection()
+    q = 'select * from endpoints where is_k8s_master=1'
+    try:
+        cur = con.cursor()
+        cur.execute(q)
+        res = cur.fetchall()
+        cur.close()
+
+    except Exception as error:
+        print(error)
+        return jsonify({'message': 'server error'})
+    return jsonify({'masters': res}),200       
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=4444)
