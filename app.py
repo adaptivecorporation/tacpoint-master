@@ -590,7 +590,7 @@ def research_Netstat_By_ID(current_user, host_id):
         arr.append(split_str2[0])
     print(arr)
 
-    research_api = "https://endpoint.apivoid.com/iprep/v1/pay-as-you-go/?key="+constants.IP_REP_API_KEY+"&ip="
+    research_api = ""
     local_re = re.compile(r'/(^127\.)|(^192\.168\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^::1$)|(^[fF][cCdD])/')
     for rec in arr:
         sr = re.findall(local_re, str(rec))
